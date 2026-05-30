@@ -39,7 +39,6 @@ jobs:
           images: ghcr.io/${{ github.repository }}
           tags: |
             type=ref,event=branch
-            type=sha,prefix=${{ github.ref_name }}-
             type=raw,value=stg,enable=${{ github.ref_name == 'stg' }}
             type=raw,value=prod,enable=${{ github.ref_name == 'main' }}
 
