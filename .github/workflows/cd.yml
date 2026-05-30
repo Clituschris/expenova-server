@@ -67,15 +67,15 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
-      # - name: Trigger Render deploy
-      #   run: |
-      #     curl -f -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}" \
-      #       -H "Content-Type: application/json"
+      - name: Trigger Render deploy
+        run: |
+          curl -f -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}" \
+            -H "Content-Type: application/json"
 
-      # - name: Delete old untagged images
-      #   uses: actions/delete-package-versions@v5
-      #   with:
-      #     package-name: ${{ github.event.repository.name }}
-      #     package-type: container
-      #     min-versions-to-keep: 5
-      #     delete-only-untagged-versions: true
+      - name: Delete old untagged images
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: ${{ github.event.repository.name }}
+          package-type: container
+          min-versions-to-keep: 5
+          delete-only-untagged-versions: true
