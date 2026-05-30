@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import Fastify from 'fastify';
-import { usersRoutes } from './routes/users';
+import { apiRoutes } from './routes';
 import { registerErrorHandler } from './middleware/error-handler';
 
 const app = Fastify({
@@ -9,10 +9,11 @@ const app = Fastify({
   },
 });
 
-// Health check — Render uses this to confirm the service is alive
+// Health check
 app.get('/health', async () => ({ status: 'ok', env: process.env.NODE_ENV }));
 
-app.register(usersRoutes);
+app.register(apiRoutes, { prefix: '/api/v1' });
+
 registerErrorHandler(app);
 
 const port = Number(process.env.PORT) || 3000;

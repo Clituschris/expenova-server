@@ -8,7 +8,7 @@ interface CreateUserBody {
 }
 
 export async function usersRoutes(app: FastifyInstance) {
-    app.get('/users', async (_req, reply) => {
+    app.get('/', async (_req, reply) => {
         const users = await sql`
       SELECT id, email, name, is_active, created_at, updated_at
       FROM users ORDER BY created_at DESC
@@ -16,7 +16,7 @@ export async function usersRoutes(app: FastifyInstance) {
         return reply.send(users);
     });
 
-    app.get<{ Params: { id: string } }>('/users/:id', async (req, reply) => {
+    app.get<{ Params: { id: string } }>('/:id', async (req, reply) => {
         const [user] = await sql`
       SELECT id, email, name, is_active, created_at, updated_at
       FROM users WHERE id = ${req.params.id}
@@ -25,7 +25,7 @@ export async function usersRoutes(app: FastifyInstance) {
         return reply.send(user);
     });
 
-    app.post<{ Body: CreateUserBody }>('/users', async (req, reply) => {
+    app.post<{ Body: CreateUserBody }>('/', async (req, reply) => {
         const { email, name, password_hash } = req.body;
         const [user] = await sql`
       INSERT INTO users (email, name, password_hash)
@@ -35,7 +35,7 @@ export async function usersRoutes(app: FastifyInstance) {
         return reply.status(201).send(user);
     });
 
-    app.delete<{ Params: { id: string } }>('/users/:id', async (req, reply) => {
+    app.delete<{ Params: { id: string } }>('/:id', async (req, reply) => {
         const [user] = await sql`
       DELETE FROM users WHERE id = ${req.params.id} RETURNING id
     `;
