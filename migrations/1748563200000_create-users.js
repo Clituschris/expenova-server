@@ -1,39 +1,47 @@
-
 export async function up(pgm) {
   pgm.createTable('users', {
     id: {
       type: 'uuid',
       primaryKey: true,
-      default: pgm.func('gen_random_uuid()'),
+      default: pgm.func('gen_random_uuid()')
     },
     email: {
       type: 'varchar(255)',
       notNull: true,
-      unique: true,
+      unique: true
     },
     name: {
       type: 'varchar(255)',
-      notNull: true,
+      notNull: true
+    },
+    phone: {
+      type: 'varchar(15)',
+      notNull: true
     },
     password_hash: {
       type: 'varchar(255)',
-      notNull: true,
+      notNull: true
     },
     is_active: {
       type: 'boolean',
       notNull: true,
-      default: true,
+      default: true
+    },
+    last_login: {
+      type: 'timestamptz',
+      notNull: true,
+      default: pgm.func('now()')
     },
     created_at: {
       type: 'timestamptz',
       notNull: true,
-      default: pgm.func('now()'),
+      default: pgm.func('now()')
     },
     updated_at: {
       type: 'timestamptz',
       notNull: true,
-      default: pgm.func('now()'),
-    },
+      default: pgm.func('now()')
+    }
   });
 
   pgm.createIndex('users', 'email');
@@ -49,7 +57,7 @@ export async function up(pgm) {
     when: 'BEFORE',
     operation: 'UPDATE',
     level: 'ROW',
-    function: 'set_updated_at',
+    function: 'set_updated_at'
   });
 }
 

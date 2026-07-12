@@ -1,15 +1,16 @@
-import { FastifyInstance } from 'fastify';
+import type { FastifyInstance } from 'fastify';
 
 export function registerErrorHandler(app: FastifyInstance) {
-    app.setErrorHandler((error, _req, reply) => {
-        app.log.error(error);
-        // Postgres unique constraint violation
-        if ((error as { code?: string }).code === '23505') {
-            return reply.status(409).send({ error: 'Resource already exists' });
-        }
-        const statusCode = error.statusCode ?? 500;
-        return reply.status(statusCode).send({
-            error: statusCode === 500 ? 'Internal server error' : error.message,
-        });
+  app.setErrorHandler((error, _req, reply) => {
+    app.log.error(error);
+    // Postgres unique constraint violation
+    if ((error as { code?: string }).code === '23505') {
+      return reply.status(409).send({ error: 'Resource already exists' });
+    }
+    const _error = error as { statusCode?: number; message: string };
+    const statusCode = _error.statusCode ?? 500;
+    return reply.status(statusCode).send({
+      error: statusCode === 500 ? 'Internal server error' : _error.message
     });
+  });
 }
