@@ -1,22 +1,44 @@
 import 'dotenv/config';
 import Fastify from 'fastify';
-import { apiRoutes } from './routes';
+
+import { swaggerPlugin, jwtPlugin } from './plugins';
+import { apiRoutes, healthRoutes } from './routes';
 import { registerErrorHandler } from './middleware/error-handler';
 
 const app = Fastify({
   logger: {
-    level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
-  },
+    level: process.env.NODE_ENV === 'production' ? 'info' : 'debug'
+  }
 });
 
-// Health check
-app.get('/health', async () => ({ status: 'ok', env: process.env.NODE_ENV }));
+async function start() {
+  // register plugins
+  await app.register(swaggerPlugin);
+  await app.register(jwtPlugin);
 
-app.register(apiRoutes, { prefix: '/api/v1' });
+  // health check
+  await app.register(healthRoutes);
 
-registerErrorHandler(app);
+  await app.register(apiRoutes, { prefix: '/api/v1' });
 
-const port = Number(process.env.PORT) || 3000;
-app.listen({ port, host: '0.0.0.0' }, (err) => {
-  if (err) { app.log.error(err); process.exit(1); }
+  registerErrorHandler(app);
+
+  const port = Number(process.env.PORT) || 3000;
+
+  await app.listen({ port, host: '0.0.0.0' });
+
+  // graceful shutdown
+  const closeGracefully = async (signal: string) => {
+    app.log.info(`Received ${signal}, shutting down gracefully...`);
+    await app.close();
+    process.exit(0);
+  };
+
+  process.on('SIGTERM', () => closeGracefully('SIGTERM'));
+  process.on('SIGINT', () => closeGracefully('SIGINT'));
+}
+
+start().catch((err) => {
+  app.log.error(err);
+  process.exit(1);
 });
