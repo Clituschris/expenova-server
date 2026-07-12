@@ -1,7 +1,8 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "commonjs",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "lib": ["ES2022"],
     "outDir": "./dist",
     "rootDir": "./src",
@@ -14,15 +15,13 @@
     "declarationMap": true,
     "sourceMap": true,
     "types": ["node", "jest"],
-    "ignoreDeprecations": "5.0",
-    "baseUrl": ".",
     "paths": {
-      "@type/*": ["src/types/*"],
-      "@db/*": ["src/db/*"],
-      "@routes/*": ["src/routes/*"],
-      "@controllers/*": ["src/controllers/*"],
-      "@middlewares/*": ["src/middlewares/*"],
-      "@utils/*": ["src/utils/*"]
+      "@type/*": ["./src/types/*"],
+      "@db/*": ["./src/db/*"],
+      "@routes/*": ["./src/routes/*"],
+      "@controllers/*": ["./src/controllers/*"],
+      "@middlewares/*": ["./src/middlewares/*"],
+      "@utils/*": ["./src/utils/*"]
     },
     "experimentalDecorators": true
   },
