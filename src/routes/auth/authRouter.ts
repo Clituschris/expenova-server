@@ -3,14 +3,14 @@ import AuthController from '@controllers/auth/authController';
 import { BaseRouter } from '@routes/baseRouter';
 import { Public, Get, Post, Patch } from '@routes/decorators';
 import type { Request, Response } from '@type/fastify';
-import type { LoginBody, SignupBody } from '@type/auth';
 
 import {
-  verifyUserSchema,
   loginSchema,
   signupVerifySchema,
   signupSchema,
-  restPasswordSchema
+  getResetKeySchema,
+  resetPasswordSchema,
+  verifyTokenSchema
 } from './auth.schema';
 
 class AuthRouter extends BaseRouter {
@@ -24,43 +24,41 @@ class AuthRouter extends BaseRouter {
   @Public()
   @Get('/signup/verify', signupVerifySchema)
   async verifySignupEmail(req: Request, res: Response) {
-    const query = req.query as { email: string };
-    const result = await this.controller.verifySignupEmail(query.email);
-    return res.status(201).send(result);
+    const result = await this.controller.verifySignupEmail(req);
+    return res.status(200).send(result);
   }
 
   @Public()
   @Post('/signup', signupSchema)
   async signup(req: Request, res: Response) {
-    const result = await this.controller.signup(req.body as SignupBody);
+    const result = await this.controller.signup(req);
     return res.status(201).send(result);
   }
 
   @Public()
   @Post('/login', loginSchema)
   async login(req: Request, res: Response) {
-    const result = await this.controller.login(req.body as LoginBody);
+    const result = await this.controller.login(req);
     return res.send(result);
   }
 
   @Public()
-  @Get('/verify', verifyUserSchema)
-  async verifyEmailAndPhone(req: Request, res: Response) {
-    const { email, phone } = req.query as { email: string; phone: string };
-    const result = await this.controller.verifyEmailAndPhone(email, phone);
+  @Post('/resetpassword/resetkey', getResetKeySchema)
+  async getResetPasswordKey(req: Request, res: Response) {
+    const result = await this.controller.generateResetPasswordKey(req);
     return res.send(result);
   }
 
   @Public()
-  @Patch('/resetpassword', restPasswordSchema)
+  @Patch('/resetpassword', resetPasswordSchema)
   async resetPassword(req: Request, res: Response) {
-    const { reset_key } = req.headers as { reset_key: string };
-    const { email, password } = req.body as { email: string; password: string };
-    const result = await this.controller.resetPassword(
-      reset_key,
-      email,
-      password
-    );
+    const result = await this.controller.resetPassword(req);
+    return res.send(result);
+  }
+
+  @Get('/verify-token', verifyTokenSchema)
+  verifyAuthToken(req: Request, res: Response) {
+    const result = this.controller.verifyAuthToken(req);
     return res.send(result);
   }
 }
