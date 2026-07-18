@@ -1,12 +1,3 @@
-const userSchema = {
-  type: 'object',
-  properties: {
-    id: { type: 'string' },
-    email: { type: 'string' },
-    name: { type: 'string' }
-  }
-};
-
 export const signupVerifySchema = {
   tags: ['Auth'],
   summary: 'Verify email for Signup',
@@ -20,11 +11,13 @@ export const signupVerifySchema = {
   },
   response: {
     200: {
+      description: 'Success Response',
       type: 'object',
       properties: {
         message: { type: 'string' }
       }
-    }
+    },
+    default: { $ref: 'errorResponse' }
   }
 };
 
@@ -44,13 +37,14 @@ export const signupSchema = {
   },
   response: {
     201: {
+      description: 'Success Response',
       type: 'object',
       properties: {
         message: { type: 'string' },
-        token: { type: 'string' },
-        user: userSchema
+        token: { type: 'string' }
       }
-    }
+    },
+    default: { $ref: 'errorResponse' }
   }
 };
 
@@ -67,21 +61,22 @@ export const loginSchema = {
     }
   },
   response: {
-    201: {
+    200: {
+      description: 'Success Response',
       type: 'object',
       properties: {
         message: { type: 'string' },
-        token: { type: 'string' },
-        user: userSchema
+        token: { type: 'string' }
       }
-    }
+    },
+    default: { $ref: 'errorResponse' }
   }
 };
 
-export const verifyUserSchema = {
+export const getResetKeySchema = {
   tags: ['Auth'],
-  summary: 'Verify user by email and phone',
-  querystring: {
+  summary: 'Get Reset key for resetting password',
+  body: {
     type: 'object',
     additionalProperties: false,
     required: ['email', 'phone'],
@@ -92,15 +87,17 @@ export const verifyUserSchema = {
   },
   response: {
     200: {
+      description: 'Success Response',
       type: 'object',
       properties: {
         reset_key: { type: 'string' }
       }
-    }
+    },
+    default: { $ref: 'errorResponse' }
   }
 };
 
-export const restPasswordSchema = {
+export const resetPasswordSchema = {
   tags: ['Auth'],
   summary: 'Reset user password',
   headers: {
@@ -111,6 +108,7 @@ export const restPasswordSchema = {
     }
   },
   body: {
+    description: 'Success Response',
     type: 'object',
     additionalProperties: false,
     required: ['email', 'password'],
@@ -120,12 +118,38 @@ export const restPasswordSchema = {
     }
   },
   response: {
-    201: {
+    200: {
+      description: 'Success Response',
+      type: 'object',
+      properties: {
+        message: { type: 'string' }
+      }
+    },
+    default: { $ref: 'errorResponse' }
+  }
+};
+
+export const verifyTokenSchema = {
+  tags: ['Auth'],
+  summary: 'Verify Auth Token',
+  response: {
+    200: {
+      description: 'Success Response',
       type: 'object',
       properties: {
         message: { type: 'string' },
-        user: userSchema
+        user: {
+          type: 'object',
+          properties: {
+            id: {type:'string'},
+            name: {type:'string'},
+            email: {type:'string'},
+            iat: {type:'number'},
+            exp: {type:'number'},
+          }
+        }
       }
-    }
+    },
+    default: { $ref: 'errorResponse' }
   }
 };

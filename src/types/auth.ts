@@ -17,6 +17,11 @@ export interface LoginBody {
   password: string;
 }
 
+export interface ResetKeyBody {
+  email: string;
+  phone: string;
+}
+
 export interface UserRecord {
   id: string;
   email: string;
@@ -27,14 +32,4 @@ export interface UserRecord {
   last_login: string;
   created_at: string;
   updated_at: string;
-}
-
-export interface AuthResult {
-  message: string;
-  token?: string;
-  user: {
-    id: string;
-    email: string;
-    name: string;
-  };
 }

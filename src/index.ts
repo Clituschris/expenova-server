@@ -1,7 +1,8 @@
 import 'dotenv/config';
 import Fastify from 'fastify';
+import logger from '@utils/logger';
 
-import { swaggerPlugin, jwtPlugin } from './plugins';
+import { swaggerPlugin, jwtPlugin, corsPlugin } from './plugins';
 import { apiRoutes, healthRoutes } from './routes';
 import { registerErrorHandler } from './middleware/error-handler';
 
@@ -13,6 +14,7 @@ const app = Fastify({
 
 async function start() {
   // register plugins
+  await app.register(corsPlugin);
   await app.register(swaggerPlugin);
   await app.register(jwtPlugin);
 
@@ -29,7 +31,7 @@ async function start() {
 
   // graceful shutdown
   const closeGracefully = async (signal: string) => {
-    app.log.info(`Received ${signal}, shutting down gracefully...`);
+    logger.info(`Received ${signal}, shutting down gracefully...`);
     await app.close();
     process.exit(0);
   };
@@ -39,6 +41,6 @@ async function start() {
 }
 
 start().catch((err) => {
-  app.log.error(err);
+  logger.error(err);
   process.exit(1);
 });

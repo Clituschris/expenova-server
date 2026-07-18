@@ -1,5 +1,8 @@
 import bcrypt from 'bcryptjs';
 import type { FastifyInstance } from 'fastify';
+import type { Request } from '@type/fastify';
+import type { LoginBody, ResetKeyBody, SignupBody } from '@type/auth';
+import { badRequest, conflict, internal, unauthorized } from '@utils/common';
 import {
   createUser,
   findUserByEmail,
@@ -7,22 +10,25 @@ import {
   updateLastLogin,
   updateUserPassword
 } from '@db/users';
-import type { AuthResult, LoginBody, SignupBody } from '@type/auth';
-import { conflict, unauthorized } from '@utils/common';
 
 const SALT_ROUNDS = 10;
 
 class AuthController {
   constructor(private app: FastifyInstance) {}
 
-  private signToken(user: { id: string; email: string }) {
-    return this.app.jwt.sign(
-      { sub: user.id, email: user.email },
-      { expiresIn: '1d' }
-    );
+  private signToken(user: { id: string; name: string; email: string }) {
+    try {
+      return this.app.jwt.sign(
+        { id: user.id, name: user.name, email: user.email },
+        { expiresIn: '1d' }
+      );
+    } catch (err) {
+      throw internal('Failed to sign auth token', err);
+    }
   }
 
-  async verifySignupEmail(email: string): Promise<{ message: string }> {
+  async verifySignupEmail(req: Request): Promise<{ message: string }> {
+    const { email } = req.query as { email: string };
     const user = await findUserByEmail(email);
     if (user) {
       throw conflict('Email is already registered');
@@ -33,37 +39,48 @@ class AuthController {
     };
   }
 
-  async signup(body: SignupBody): Promise<AuthResult> {
-    const _user = await findUserByEmail(body.email);
-    if (_user) {
+  async signup(req: Request): Promise<{ message: string; token: string }> {
+    const { name, email, phone, password } = req.body as SignupBody;
+    const existing = await findUserByEmail(email);
+    if (existing) {
       throw conflict('Email is already registered');
     }
 
-    const password_hash = await bcrypt.hash(body.password, SALT_ROUNDS);
+    let password_hash: string;
+    try {
+      password_hash = await bcrypt.hash(password, SALT_ROUNDS);
+    } catch (err) {
+      throw internal('Failed to hash password', err);
+    }
+
+    // createUser also guards against the email-uniqueness race condition
     const user = await createUser({
-      email: body.email,
-      name: body.name,
-      phone: body.phone,
+      email: email,
+      name: name,
+      phone: phone,
       password_hash
     });
 
     return {
       message: 'Registered successfully',
-      token: this.signToken(user),
-      user: { id: user.id, email: user.email, name: user.name }
+      token: this.signToken(user)
     };
   }
 
-  async login(body: LoginBody): Promise<AuthResult> {
-    const user = await findUserByEmail(body.email);
+  async login(req: Request): Promise<{ message: string; token: string }> {
+    const { email, password } = req.body as LoginBody;
+    const user = await findUserByEmail(email);
     if (!user) {
       throw unauthorized('Invalid email or password');
     }
 
-    const passwordMatches = await bcrypt.compare(
-      body.password,
-      user.password_hash
-    );
+    let passwordMatches: boolean;
+    try {
+      passwordMatches = await bcrypt.compare(password, user.password_hash);
+    } catch (err) {
+      throw internal('Failed to verify password', err);
+    }
+
     if (!passwordMatches) {
       throw unauthorized('Invalid email or password');
     }
@@ -72,55 +89,73 @@ class AuthController {
       throw unauthorized('Account is inactive');
     }
 
-    await updateLastLogin(user.id);
+    await updateLastLogin(user.id); // non-throwing, logs internally on failure
 
     return {
       message: 'Login successfully',
-      token: this.signToken(user),
-      user: { id: user.id, email: user.email, name: user.name }
+      token: this.signToken(user)
     };
   }
 
-  async verifyEmailAndPhone(
-    email: string,
-    phone: string
-  ): Promise<{ reset_key: string }> {
+  async generateResetPasswordKey(req: Request): Promise<{ reset_key: string }> {
+    const { email, phone } = req.body as ResetKeyBody;
     const user = await getUserByEmailAndPhone(email, phone);
     if (!user) {
-      throw unauthorized('Invalid email or phone');
+      throw badRequest('Invalid email or phone');
     }
 
-    const reset_key = await bcrypt.hash(user.id, SALT_ROUNDS);
-
-    return {
-      reset_key
-    };
+    try {
+      const reset_key = await bcrypt.hash(user.id, SALT_ROUNDS);
+      return {
+        reset_key
+      };
+    } catch (err) {
+      throw internal('Failed to generate reset key', err);
+    }
   }
 
-  async resetPassword(
-    reset_key: string,
-    email: string,
-    password: string
-  ): Promise<AuthResult> {
+  async resetPassword(req: Request): Promise<{ message: string }> {
+    const { reset_key } = req.headers as { reset_key: string };
+    const { email, password } = req.body as { email: string; password: string };
     if (!reset_key) {
       throw unauthorized('Reset key not found');
     }
 
-    const _user = await findUserByEmail(email);
-    if (!_user) {
-      throw unauthorized('Invalid Email');
+    const user = await findUserByEmail(email);
+    if (!user) {
+      throw unauthorized('Invalid email');
     }
-    const isValidResetKey = await bcrypt.compare(_user.id, reset_key);
+
+    let isValidResetKey: boolean;
+    try {
+      isValidResetKey = await bcrypt.compare(user.id, reset_key);
+    } catch (err) {
+      throw unauthorized('Invalid reset key');
+    }
 
     if (!isValidResetKey) {
-      throw unauthorized(`Invalid reset key`);
+      throw unauthorized('Invalid reset key');
     }
-    const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
-    const user = await updateUserPassword(email, password_hash);
+
+    let password_hash: string;
+    try {
+      password_hash = await bcrypt.hash(password, SALT_ROUNDS);
+    } catch (err) {
+      throw internal('Failed to hash password', err);
+    }
+
+    await updateUserPassword(email, password_hash);
 
     return {
-      message: 'Password reset successfully',
-      user: { id: user.id, email: user.email, name: user.name }
+      message: 'Password reset successfully'
+    };
+  }
+
+  verifyAuthToken(req: Request) {
+    const user = req.user;
+    return {
+      message: 'Valid token',
+      user
     };
   }
 }
