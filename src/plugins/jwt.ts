@@ -20,7 +20,11 @@ async function jwtPlugin(fastify: FastifyInstance) {
       try {
         await request.jwtVerify();
       } catch (err) {
-        await reply.code(401).send({ message: 'Unauthorized' });
+        await reply.code(401).send({
+          statusCode: 401,
+          error: 'Unauthorized',
+          message: 'Not Authourized'
+        });
       }
     }
   );

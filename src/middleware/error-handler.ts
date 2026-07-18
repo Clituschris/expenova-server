@@ -1,8 +1,9 @@
 import type { FastifyInstance } from 'fastify';
+import logger from '@utils/logger';
 
 export function registerErrorHandler(app: FastifyInstance) {
   app.setErrorHandler((error, _req, reply) => {
-    app.log.error(error);
+    logger.error(error);
     // Postgres unique constraint violation
     if ((error as { code?: string }).code === '23505') {
       return reply.status(409).send({ error: 'Resource already exists' });

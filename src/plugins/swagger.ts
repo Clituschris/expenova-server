@@ -33,6 +33,17 @@ async function swaggerConfig(fastify: FastifyInstance) {
     }
   });
 
+  fastify.addSchema({
+    $id: 'errorResponse',
+    description: 'Error Response',
+    type: 'object',
+    properties: {
+      statusCode: { type: 'number' },
+      error: { type: 'string' },
+      message: { type: 'string' }
+    }
+  });
+
   if (process.env.DOCS_USERNAME && process.env.DOCS_PASSWORD) {
     await fastify.register(fastifyBasicAuth, {
       validate: (username, password, req, reply, done) => {
