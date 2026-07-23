@@ -1,3 +1,11 @@
+export const userDetailSchema = {
+  type: 'object',
+  properties: {
+    name: { type: 'string' },
+    email: { type: 'string' }
+  }
+};
+
 export const signupVerifySchema = {
   tags: ['Auth'],
   summary: 'Verify email for Signup',
@@ -41,7 +49,8 @@ export const signupSchema = {
       type: 'object',
       properties: {
         message: { type: 'string' },
-        token: { type: 'string' }
+        token: { type: 'string' },
+        user: userDetailSchema
       }
     },
     default: { $ref: 'errorResponse' }
@@ -66,7 +75,8 @@ export const loginSchema = {
       type: 'object',
       properties: {
         message: { type: 'string' },
-        token: { type: 'string' }
+        token: { type: 'string' },
+        user: userDetailSchema
       }
     },
     default: { $ref: 'errorResponse' }
@@ -141,11 +151,11 @@ export const verifyTokenSchema = {
         user: {
           type: 'object',
           properties: {
-            id: {type:'string'},
-            name: {type:'string'},
-            email: {type:'string'},
-            iat: {type:'number'},
-            exp: {type:'number'},
+            id: { type: 'string' },
+            name: { type: 'string' },
+            email: { type: 'string' },
+            iat: { type: 'number' },
+            exp: { type: 'number' }
           }
         }
       }

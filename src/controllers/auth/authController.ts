@@ -1,8 +1,8 @@
-import bcrypt from 'bcryptjs';
 import type { FastifyInstance } from 'fastify';
 import type { Request } from '@type/fastify';
-import type { LoginBody, ResetKeyBody, SignupBody } from '@type/auth';
+import bcrypt from 'bcryptjs';
 import { badRequest, conflict, internal, unauthorized } from '@utils/common';
+import type { LoginBody, ResetKeyBody, SignupBody } from '@type/auth';
 import {
   createUser,
   findUserByEmail,
@@ -27,7 +27,7 @@ class AuthController {
     }
   }
 
-  async verifySignupEmail(req: Request): Promise<{ message: string }> {
+  async verifySignupEmail(req: Request) {
     const { email } = req.query as { email: string };
     const user = await findUserByEmail(email);
     if (user) {
@@ -39,7 +39,7 @@ class AuthController {
     };
   }
 
-  async signup(req: Request): Promise<{ message: string; token: string }> {
+  async signup(req: Request) {
     const { name, email, phone, password } = req.body as SignupBody;
     const existing = await findUserByEmail(email);
     if (existing) {
@@ -63,11 +63,15 @@ class AuthController {
 
     return {
       message: 'Registered successfully',
-      token: this.signToken(user)
+      token: this.signToken(user),
+      user: {
+        name: user.name,
+        email: user.email
+      }
     };
   }
 
-  async login(req: Request): Promise<{ message: string; token: string }> {
+  async login(req: Request) {
     const { email, password } = req.body as LoginBody;
     const user = await findUserByEmail(email);
     if (!user) {
@@ -93,11 +97,15 @@ class AuthController {
 
     return {
       message: 'Login successfully',
-      token: this.signToken(user)
+      token: this.signToken(user),
+      user: {
+        name: user.name,
+        email: user.email
+      }
     };
   }
 
-  async generateResetPasswordKey(req: Request): Promise<{ reset_key: string }> {
+  async generateResetPasswordKey(req: Request) {
     const { email, phone } = req.body as ResetKeyBody;
     const user = await getUserByEmailAndPhone(email, phone);
     if (!user) {
@@ -114,7 +122,7 @@ class AuthController {
     }
   }
 
-  async resetPassword(req: Request): Promise<{ message: string }> {
+  async resetPassword(req: Request) {
     const { reset_key } = req.headers as { reset_key: string };
     const { email, password } = req.body as { email: string; password: string };
     if (!reset_key) {
